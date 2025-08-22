@@ -1,0 +1,40 @@
+---
+name: run_terraform_ci
+
+on:
+  push:
+    paths:
+      - .github/workflows/run_terraform_ci.yml
+      - terraform/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  run_terraform_ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.1
+
+      - name: Install tflint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.58.0
+
+      - name: Run terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Run tflint
+        run: tflint --recursive
