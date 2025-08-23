@@ -1,0 +1,10 @@
+---
+- name: Deploy rancher k8s ctrl servers
+  hosts: rancher_k8s_ctrl
+  become: true
+  roles:
+    - role: common
+      tags: common
+
+    - role: rancher_k8s
+      tags: rancher_k8s

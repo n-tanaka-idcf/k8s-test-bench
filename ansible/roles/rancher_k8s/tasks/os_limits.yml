@@ -1,0 +1,22 @@
+---
+- name: Set nofile limits for all users
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/99-k8s-nofile.conf
+    content: |
+      * soft nofile 65535
+      * hard nofile 65535
+    owner: root
+    group: root
+    mode: '0644'
+  when: rancher_k8s.role in ["all", "agent"]
+
+- name: Set sysctl parameters for inotify
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  with_items:
+    - { name: fs.inotify.max_user_watches, value: 1048576 }
+    - { name: fs.inotify.max_user_instances, value: 8192 }
+    - { name: fs.inotify.max_queued_events, value: 65536 }

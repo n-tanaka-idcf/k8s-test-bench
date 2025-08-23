@@ -1,0 +1,4 @@
+---
+rancher_k8s:
+  role: ctrl
+  disabled_firewalld: true

@@ -1,0 +1,6 @@
+---
+common_misc_command_packages:
+  - bash-completion
+  - nc
+  - neovim
+  - tcpdump

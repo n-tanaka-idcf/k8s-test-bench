@@ -1,0 +1,69 @@
+---
+- name: Ensure the NetworkManager configuration directory exists
+  ansible.builtin.file:
+    path: /etc/NetworkManager/conf.d
+    state: directory
+    mode: '0755'
+
+- name: Create RKE2 Canal NetworkManager config
+  ansible.builtin.copy:
+    src: files/rke2-canal.conf
+    dest: /etc/NetworkManager/conf.d/rke2-canal.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart NetworkManager
+
+- name: Disable firewalld if it is running
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
+  when: rancher_k8s.disabled_firewalld
+
+# - name: Enable firewalld if it is running
+#   ansible.builtin.systemd:
+#     name: firewalld
+#     enabled: true
+#     state: started
+#   when: rancher_k8s.disabled_firewalld
+
+# - name: Open RKE2 server node(k8s controlloer) ports in firewalld
+#   ansible.posix.firewalld:
+#     port: "{{ item }}"
+#     permanent: true
+#     state: enabled
+#     immediate: true
+#   loop:
+#     - 6443/tcp        # Kubernetes API server
+#     - 9345/tcp        # RKE2 Supervisor API
+#     - 2379/tcp        # etcd client
+#     - 2380/tcp        # etcd peer
+#     - 2381/tcp        # etcd metrics
+#     - 10250/tcp       # kubelet metrics (also on agents but opening here too is ok)
+#     - 30000-32767/tcp # NodePort range
+#   when: rancher_k8s.role in ["all", "server"]
+
+# - name: Open RKE2 agent node(k8s worker) ports in firewalld
+#   ansible.posix.firewalld:
+#     port: "{{ item }}"
+#     permanent: true
+#     state: enabled
+#     immediate: true
+#   loop:
+#     - 10250/tcp       # kubelet metrics
+#     - 30000-32767/tcp # NodePort range
+#   when: rancher_k8s.role in ["all", "agent"]
+
+# - name: Open Calico CNI related ports in firewalld
+#   ansible.posix.firewalld:
+#     port: "{{ item }}"
+#     permanent: true
+#     state: enabled
+#     immediate: true
+#   loop:
+#     - 179/tcp   # Calico CNI with BGP
+#     - 4789/udp  # Calico CNI with VXLAN
+#     - 5473/tcp  # Calico CNI with Typha
+#     - 9098/tcp  # Calico Typha health checks
+#     - 9099/tcp  # Calico health checks

@@ -1,0 +1,65 @@
+---
+- name: Install required OS packages
+  ansible.builtin.dnf:
+    name: python3-pip
+    state: present
+
+- name: Install required python packages
+  ansible.builtin.pip:
+    name: requests
+    executable: pip3
+  when: not ansible_check_mode
+
+- name: Ensure ip_tables module is loaded immediately
+  ansible.builtin.command:
+    cmd: modprobe ip_tables
+  register: modprobe_result
+  changed_when: modprobe_result.rc == 0
+
+- name: Ensure ip_tables module is loaded on boot
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/ip_tables.conf
+    content: |
+      ip_tables
+    owner: root
+    group: root
+    mode: "0644"
+
+# - name: Add HTTP and HTTPS services to firewalld
+#   ansible.posix.firewalld:
+#     service: "{{ item }}"
+#     zone: public
+#     permanent: true
+#     state: enabled
+#     immediate: true
+#   loop:
+#     - http
+#     - https
+
+- name: Ensure firewalld is disabled
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
+
+- name: Ensure the data dir for Rancher exists
+  ansible.builtin.file:
+    path: /opt/rancher
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Run Rancher container
+  community.docker.docker_container:
+    name: rancher
+    image: rancher/rancher:v2.8-head
+    state: started
+    restart_policy: unless-stopped
+    published_ports:
+      - 80:80
+      - 443:443
+    privileged: true
+    detach: true
+    volumes:
+      - /opt/rancher:/var/lib/rancher

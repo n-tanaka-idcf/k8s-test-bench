@@ -1,0 +1,7 @@
+---
+- name: Deploy rancher misc servers
+  hosts: rancher_misc
+  become: true
+  roles:
+    - role: common
+      tags: common

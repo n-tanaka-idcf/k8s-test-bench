@@ -1,0 +1,54 @@
+---
+- name: Ensure required OS packages are installed
+  ansible.builtin.dnf:
+    name: "{{ package }}"
+    state: present
+  loop:
+    - lvm2-2.03.28-6.el9
+  loop_control:
+    loop_var: package
+
+- name: Extract device names from inventory
+  ansible.builtin.set_fact:
+    data_device_names: "{{ rancher_k8s_data_disks | map('split', '/') | map('last') | list }}"
+  check_mode: true
+
+- name: Check if any of the specified disks are missing
+  ansible.builtin.set_fact:
+    is_missing_disk_exists: "{{ (data_device_names | difference(ansible_devices.keys() | list)) | length > 0 }}"
+  check_mode: true
+
+- name: Rescan all SCSI hosts
+  ansible.builtin.shell: |
+    set -o pipefail
+    for host in /sys/class/scsi_host/host*; do
+      echo "- - -" | tee $host/scan
+    done
+  when: is_missing_disk_exists
+  changed_when: true
+
+- name: Ensure volume groups are created
+  community.general.lvg:
+    vg: vg_data
+    pvs: "{{ rancher_k8s_data_disks }}"
+    state: present
+
+- name: Encure the logical volume is created
+  community.general.lvol:
+    lv: lv_data
+    vg: vg_data
+    size: 199.9g
+    state: present
+
+- name: Format data disks
+  community.general.filesystem:
+    fstype: xfs
+    dev: /dev/mapper/vg_data-lv_data
+    state: present
+
+- name: Mount the lv
+  ansible.posix.mount:
+    src: /dev/mapper/vg_data-lv_data
+    path: /data
+    fstype: xfs
+    state: mounted

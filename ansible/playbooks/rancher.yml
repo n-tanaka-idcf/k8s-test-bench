@@ -1,0 +1,13 @@
+---
+- name: Deploy rancher servers
+  hosts: rancher
+  become: true
+  roles:
+    - role: common
+      tags: common
+
+    - role: docker
+      tags: docker
+
+    - role: rancher
+      tags: rancher

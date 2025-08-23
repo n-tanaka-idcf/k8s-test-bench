@@ -1,0 +1,4 @@
+---
+- name: Setup the rancher
+  ansible.builtin.import_tasks: setup/rancher.yml
+  tags: setup_rancher

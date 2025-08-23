@@ -1,0 +1,32 @@
+---
+- name: Ensure reauired packages are installed
+  ansible.builtin.dnf:
+    name: "{{ package }}"
+    state: present
+  with_items:
+    - iscsi-initiator-utils
+    - nfs-utils
+    - cryptsetup
+  loop_control:
+    loop_var: package
+
+- name: Ensure kernel module is loaded on boot
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/longhorn.conf
+    content: |
+      dm_crypt
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure iSCSI service is enabled and started
+  ansible.builtin.systemd:
+    name: iscsid
+    enabled: true
+    state: started
+
+- name: Ensure the Longhorn data directory exists
+  ansible.builtin.file:
+    path: /data/longhorn
+    state: directory
+    mode: "0755"

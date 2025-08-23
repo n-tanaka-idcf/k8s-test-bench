@@ -1,0 +1,22 @@
+---
+- name: Setup the swap
+  ansible.builtin.import_tasks: swap.yml
+  tags: rancher_k8s_swap
+
+- name: Setup the network
+  ansible.builtin.import_tasks: network.yml
+  tags: rancher_k8s_network
+
+- name: Setup OS limits
+  ansible.builtin.import_tasks: os_limits.yml
+  tags: rancher_k8s_os_limits
+
+- name: Setup the data disk
+  ansible.builtin.import_tasks: data_disk.yml
+  when: rancher_k8s.role in ["all", "worker"]
+  tags: rancher_k8s_data_disk
+
+- name: Setup the longhorn
+  ansible.builtin.import_tasks: longhorn.yml
+  when: rancher_k8s.role in ["all", "worker"]
+  tags: rancher_k8s_longhorn
