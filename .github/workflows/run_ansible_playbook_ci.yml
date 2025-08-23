@@ -31,7 +31,7 @@ jobs:
 
       - name: Setup the Ansible environment
         working-directory: ansible
-        run: uv python install && uv sync --frozen
+        run: uv python install && uv sync --frozen --project ../.devcontainer/ansible/
 
       - name: Create the vault password file
         working-directory: ansible
